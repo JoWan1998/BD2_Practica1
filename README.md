@@ -8,11 +8,29 @@
 ### **JOSÉ ORLANDO WANNAN ESCOBAR**
 ---
 
+**INDICE**
+
+- [GESTIÓN DINAMICA DE LA MEMORIA](#GESTIÓN-DINAMICA-DE-LA-MEMORIA)
+	- [SGA](#SGA)
+	- [PGA](#PGA)
+	- [SESSIONS Y PROCESSES](#SESSIONS-Y-PROCESSES)
+- [PERMISOS Y AUTENTICACIÓN](#PERMISOS-Y-AUTENTICACIÓN)
+	- [CREACION DE TABLESPACE y DATAFILE](#CREACION-DE-TABLESPACE-y-DATAFILE)
+	- [USUARIO DEL ESQUEMA](#USUARIO-DEL-ESQUEMA)
+	- [ASIGNACION DE PERMISOS](#ASIGNACION-DE-PERMISOS)
+	- [CREACION TABLAS PARA ESQUEMA](#CREACION-TABLAS-PARA-ESQUEMA)
+	- [CREACIÓN DE ROLES](#CREACIÓN-DE-ROLES)
+	- [GESTION DE PERMISOS PARA ROLES](#GESTION-DE-PERMISOS-PARA-ROLES)
+	- [CREACIÓN DE USUARIOS](#CREACIÓN-DE-USUARIOS)
+	- [DATOS EN TABLAS](#DATOS-EN-TABLAS)
+	- [VISTAS](#VISTAS)
+- [BACKUP](#BACKUP)
+
 
 
 # **GESTIÓN DINAMICA DE LA MEMORIA**
 
-* **SGA**
+## **SGA**
 
 Oracle recomienda que su espacio de intercambio sea como mínimo tres o cuatro veces el tamaño de su memoria física RAM.
 
@@ -32,14 +50,14 @@ ALTER SYSTEM SET SGA_TARGET=750M scope=spfile;
 
 ```
 
-* **PGA**
+## **PGA**
 
 ```sql
 
 ALTER SYSTEM SET pga_aggregate_target=104857600 scope=spfile;
 ```
 
-* **SESSIONS Y PROCESSES**
+## **SESSIONS Y PROCESSES**
 
 Si la aplicación frecuentemente presenta errores que indican que se ha excedido en número máximo de sesiones en la base de datos, se sugiere ampliar los parámetros: processes y sessions.
 
@@ -72,7 +90,7 @@ MAXSIZE 580M;
 
 ```
 
-### **USUARIO DEL ESQUEMA** 
+## **USUARIO DEL ESQUEMA** 
 
 ```sql
 
@@ -83,7 +101,7 @@ ACCOUNT UNLOCK;
 
 ```
 
-### **ASIGNACION DE PERMISOS**
+## **ASIGNACION DE PERMISOS**
 
 ```sql
 
@@ -94,7 +112,7 @@ GRANT ALL PRIVILEGES TO Elecciones;
 
 ```
 
-### **CREACION TABLAS PARA ESQUEMA**
+## **CREACION TABLAS PARA ESQUEMA**
 
 ```sql
 
@@ -174,7 +192,7 @@ CREATE ROLE ADMIN;
 
 ```
 
-### **GESTION DE PERMISOS PARA ROLES**
+## **GESTION DE PERMISOS PARA ROLES**
 
 #### GUEST
 
