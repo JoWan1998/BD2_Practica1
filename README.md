@@ -8,6 +8,9 @@
 ### **JOSÉ ORLANDO WANNAN ESCOBAR**
 ---
 
+**LINK REPOSITORIO**: [Repositorio GITHUB](https://github.com/JoWan1998/BD2_Practica1)
+
+
 **INDICE**
 
 - [GESTIÓN DINAMICA DE LA MEMORIA](#GESTIÓN-DINAMICA-DE-LA-MEMORIA)
