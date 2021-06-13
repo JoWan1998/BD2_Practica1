@@ -1,0 +1,5 @@
+USERID=jornadas
+DIRECTORY=dir_jornadas_dmp
+DUMPFILE=export_jornadas.dmp
+LOGFILE=log_jornadas_export.log
+SCHEMAS=JORNADAS

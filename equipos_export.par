@@ -1,0 +1,5 @@
+USERID=equipos
+DIRECTORY=dir_equipos_dmp
+DUMPFILE=export_equipos.dmp
+LOGFILE=log_equipos_export.log
+SCHEMAS=EQUIPOS

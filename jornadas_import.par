@@ -1,0 +1,8 @@
+USERID=jornadas_imp
+DIRECTORY=dir_jornadasimp_dmp
+DUMPFILE=export_jornadas.dmp
+LOGFILE=log_jornadas_import.log
+SCHEMAS=JORNADAS
+CONTENT=ALL
+TABLE_EXISTS_ACTION=REPLACE
+REMAP_SCHEMA=jornadas:jornadas_imp

@@ -1,0 +1,8 @@
+USERID=equipos_imp
+DIRECTORY=dir_equiposimp_dmp
+DUMPFILE=export_equipos.dmp
+LOGFILE=log_equipos_import.log
+SCHEMAS=EQUIPOS
+TABLE_EXISTS_ACTION=REPLACE
+REMAP_SCHEMA=equipos:equipos_imp
+CONTENT=METADATA_ONLY

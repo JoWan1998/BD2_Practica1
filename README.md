@@ -52,6 +52,8 @@ ALTER SYSTEM SET SGA_TARGET=750M scope=spfile;
 
 ## **PGA**
 
+Por razones de error, PGA no pudo configurarse, aunque el script para la modificación de la misma se adjunta.
+
 ```sql
 
 ALTER SYSTEM SET pga_aggregate_target=104857600 scope=spfile;
@@ -78,6 +80,10 @@ STARTUP FORCE;
 
 # **PERMISOS Y AUTENTICACIÓN**
 
+Para crear un esquema es necesario la creación de un tablespace que ocupe tener las tablas, vistas, del cual se almacenaran los datos.
+
+En este caso crearemos una con un tamaño de 250MB, el cual se podra extender hasta un limite de 580M.
+
 ## **CREACION DE TABLESPACE y DATAFILE**
 
 ```sql
@@ -89,6 +95,8 @@ AUTOEXTEND ON NEXT 250M
 MAXSIZE 580M;
 
 ```
+
+Luego, procedemos a crear un usuario el cual podra conectarse a nuestro tablespace, de tal manera que este sera nuestro **esquema**, debemos de asignarle permisos suficientes.
 
 ## **USUARIO DEL ESQUEMA** 
 
@@ -111,6 +119,8 @@ ALTER USER Elecciones QUOTA UNLIMITED ON ELECCIONESTBS;
 GRANT ALL PRIVILEGES TO Elecciones;
 
 ```
+
+Procedemos a crear la BD, de acuerdo al diagrama del enunciado de practica.
 
 ## **CREACION TABLAS PARA ESQUEMA**
 
@@ -181,7 +191,12 @@ CREATE TABLE VOTO(
 
 ```
 
+ 
+
+
 ## **CREACIÓN DE ROLES**
+
+Al tener nuestro esquema ya creado es necesario que creemos nuestros roles, los cuales poseeran permisos especificos del cual estaremos otorgandoles según nuestro enunciado de practica.
 
 ```sql
 
@@ -193,6 +208,8 @@ CREATE ROLE ADMIN;
 ```
 
 ## **GESTION DE PERMISOS PARA ROLES**
+
+En este punto al tener todos los roles necesarios procedemos a asignarle permisos sobre los objetos del esquema.
 
 #### GUEST
 
@@ -262,6 +279,8 @@ GRANT RESOURCE TO ADMIN;
 ```
 
 ## **CREACIÓN DE USUARIOS**
+
+Ya creados y con permisos nuestros roles, creamos los usuarios destinados a cada rol, en donde luego de crearlos debemos de asignarles el rol especificado.
 
 ### GUEST'S
 
@@ -781,6 +800,8 @@ ORDER BY D.NOMBRE_DEPTO, M.NOMBRE_MUNI;
 
 ### **ASIGNAR PERMISO A LA VISTA A USUARIO GUEST1**
 
+En este punto asignamos permisos al usuario GUEST1, para que pueda acceder a esta vista la cual fue creada en el esquema **Elecciones**.
+
 ```sql
 
 GRANT SELECT
@@ -791,3 +812,504 @@ TO guest1;
 
 # **BACKUP**
 
+## **EXPORTACION**
+
+Para exportación primero es necesario preaparar todo el ambiente requerido para las intrucciones, crear tablespaces dedicados, crear usuarios, y posteriormente generar el script adecuado para la exportación
+
+### **PREPARACIÓN DE ENTORNO**
+
+#### **PREPARACION DE ESQUEMAS**
+
+```sql
+
+ -- CREACION DEL TABLESPACE
+
+CREATE TABLESPACE EQUIPOSTBS
+DATAFILE 'C:\oraclexe\app\oracle\tablespacess\EQUIPOS.tbs'
+SIZE 500M;
+
+-- CREACION DE USUARIO
+
+CREATE USER equipos PROFILE DEFAULT IDENTIFIED BY equipos 
+DEFAULT TABLESPACE EQUIPOSTBS 
+TEMPORARY TABLESPACE TEMP 
+ACCOUNT UNLOCK;
+
+GRANT CONNECT TO equipos;
+GRANT RESOURCE TO equipos;
+ALTER USER equipos QUOTA UNLIMITED ON EQUIPOSTBS;
+GRANT ALL PRIVILEGES TO equipos;
+
+
+ -- CREACION DEL TABLESPACE
+
+CREATE TABLESPACE JORNADASTBS
+DATAFILE 'C:\oraclexe\app\oracle\tablespacess\JORNADAS.tbs'
+SIZE 500M;
+
+-- CREACION DE USUARIO
+
+CREATE USER jornadas PROFILE DEFAULT IDENTIFIED BY jornadas 
+DEFAULT TABLESPACE JORNADASTBS 
+TEMPORARY TABLESPACE TEMP 
+ACCOUNT UNLOCK;
+
+GRANT CONNECT TO jornadas;
+GRANT RESOURCE TO jornadas;
+ALTER USER jornadas QUOTA UNLIMITED ON JORNADASTBS;
+GRANT ALL PRIVILEGES TO jornadas;
+
+```
+
+#### **CREACION DE TABLAS E INGRESO DE DATOS**
+
+##### **BASE DE DATOS EQUIPOS**
+
+```sql
+
+CREATE TABLE Liga(
+    liga integer PRIMARY KEY,
+    nombre CHAR(250 CHAR) NOT NULL,
+    fecha_inicio Date NOT NULL,
+    fecha_fin Date NOT NULL
+)TABLESPACE EQUIPOSTBS;
+
+
+CREATE TABLE Jornada(
+    jornada integer PRIMARY KEY,
+    numero integer NOT NULL,
+    Liga_liga integer NOT NULL
+)TABLESPACE EQUIPOSTBS;
+
+CREATE TABLE Equipo(
+    equipo integer PRIMARY KEY,
+    nombre char(300 char) NOT NULL
+)TABLESPACE EQUIPOSTBS;
+
+CREATE TABLE Jugador(
+    jugador integer PRIMARY KEY,
+    nombre char(300 char) NOT NULL,
+    goles integer NOT NULL,
+    Equipo_equipo integer
+)TABLESPACE EQUIPOSTBS;
+
+
+CREATE TABLE Partido(
+    partido integer PRIMARY KEY,
+    fecha date NOT NULL,
+    goles_local integer NOT NULL,
+    goles_visita integer NOT NULL,
+    Jornada_jornada integer NOT NULL,
+    Equipo_equipo integer NOT NULL,
+    Equipo_equipo1 integer NOT NULL
+)TABLESPACE EQUIPOSTBS;
+
+COMMIT;
+
+--DML
+INSERT INTO equipos.Liga VALUES (1,'Liga BBVA','01-07-2019','31-05-2019');
+
+INSERT INTO equipos.Equipo VALUES (1,'Villarreal');
+INSERT INTO equipos.Equipo VALUES (2,'Valencia');
+INSERT INTO equipos.Equipo VALUES (3,'RealMadrid');
+INSERT INTO equipos.Equipo VALUES (4,'Atlético de Madrid');
+INSERT INTO equipos.Equipo VALUES (5,'Barcelona');
+
+INSERT INTO equipos.Jugador VALUES (1,'Karim Benzema',14,3);
+INSERT INTO equipos.Jugador VALUES (2,'Sergio Ramos',5,3);
+INSERT INTO equipos.Jugador VALUES (3,'Toni Kroos',3,3);
+INSERT INTO equipos.Jugador VALUES (4,'Luka Modric',3,3);
+INSERT INTO equipos.Jugador VALUES (5,'Casemiro',3,3,1);
+INSERT INTO equipos.Jugador VALUES (6,'Vinícius Júnior',2,3);
+INSERT INTO equipos.Jugador VALUES (7,'Gareth Bale',2,3);
+INSERT INTO equipos.Jugador VALUES (8,'Federico Valverde',2,3);
+INSERT INTO equipos.Jugador VALUES (9,'Marcelo',0,3);
+INSERT INTO equipos.Jugador VALUES (10,'Luka Jovic',2,3);
+INSERT INTO equipos.Jugador VALUES (11,'Lucas Vázquez',2,3);
+INSERT INTO equipos.Jugador VALUES (12,'Eden Hazard',1,3);
+INSERT INTO equipos.Jugador VALUES (13,'Thibaut Courtois',0,3);
+INSERT INTO equipos.Jugador VALUES (14,'Lionel Messi',19,5);
+INSERT INTO equipos.Jugador VALUES (15,'Luis Suárez',11,5);
+INSERT INTO equipos.Jugador VALUES (16,'Antoine Griezmann',8,5);
+INSERT INTO equipos.Jugador VALUES (17,'Arturo Vidal',6,5);
+INSERT INTO equipos.Jugador VALUES (18,'Sergio Busquets',2,5);
+INSERT INTO equipos.Jugador VALUES (19,'Gerard Piqué',1,5);
+INSERT INTO equipos.Jugador VALUES (20,'Ousmane Dembélé',1,5);
+INSERT INTO equipos.Jugador VALUES (21,'Sergi Roberto',1,5);
+INSERT INTO equipos.Jugador VALUES (22,'Ivan Rakitic',0,5);
+INSERT INTO equipos.Jugador VALUES (23,'Samuel Umtiti',0,5);
+INSERT INTO equipos.Jugador VALUES (24,'Marc-André ter Stegen',0,5);
+INSERT INTO equipos.Jugador VALUES (25,'Rafinha',2,5);
+INSERT INTO equipos.Jugador VALUES (26,'Álvaro Morata',8,4);
+INSERT INTO equipos.Jugador VALUES (27,'Ángel Correa',5,4);
+INSERT INTO equipos.Jugador VALUES (28,'João Félix',4,4);
+INSERT INTO equipos.Jugador VALUES (29,'Saúl Ñíguez',3,4);
+INSERT INTO equipos.Jugador VALUES (30,'Vitolo',2,4);
+INSERT INTO equipos.Jugador VALUES (31,'Koke',2,4);
+INSERT INTO equipos.Jugador VALUES (32,'Diego Costa',2,4);
+INSERT INTO equipos.Jugador VALUES (33,'Tomas Partney',2,4);
+INSERT INTO equipos.Jugador VALUES (34,'Felipe',1,4);
+INSERT INTO equipos.Jugador VALUES (35,'Marcos Llorente',1,4);
+INSERT INTO equipos.Jugador VALUES (36,'Jan Oblak',0,4);
+INSERT INTO equipos.Jugador VALUES (37,'Antonio Adán',0,4);
+INSERT INTO equipos.Jugador VALUES (38,'Maxi Gómez',9,3);
+INSERT INTO equipos.Jugador VALUES (39,'Daniel Parejo',8,3);
+INSERT INTO equipos.Jugador VALUES (40,'Kevin Gameiro',5,3);
+INSERT INTO equipos.Jugador VALUES (41,'Ferrán Torres',4,3);
+INSERT INTO equipos.Jugador VALUES (42,'Rodrigo Moreno',2,3);
+INSERT INTO equipos.Jugador VALUES (43,'Carlos Soler',2,3);
+INSERT INTO equipos.Jugador VALUES (44,'Denis Cheryshev',1,3);
+INSERT INTO equipos.Jugador VALUES (45,'Daniel Wass',1,3);
+INSERT INTO equipos.Jugador VALUES (46,'Gonçalo Guedes',0,3);
+INSERT INTO equipos.Jugador VALUES (47,'Ezequiel Garay',0,3);
+INSERT INTO equipos.Jugador VALUES (48,'Jaume Costa',0,3);
+INSERT INTO equipos.Jugador VALUES (49,'Francis Coquelin',0,3);
+
+INSERT INTO equipos.Jornada VALUES (1,1,1);
+INSERT INTO equipos.Jornada VALUES (2,2,1);
+INSERT INTO equipos.Jornada VALUES (3,3,1);
+INSERT INTO equipos.Jornada VALUES (4,4,1);
+INSERT INTO equipos.Jornada VALUES (5,5,1);
+INSERT INTO equipos.Jornada VALUES (6,6,1);
+INSERT INTO equipos.Jornada VALUES (7,7,1);
+INSERT INTO equipos.Jornada VALUES (8,8,1);
+INSERT INTO equipos.Jornada VALUES (9,9,1);
+INSERT INTO equipos.Jornada VALUES (10,10,1);
+INSERT INTO equipos.Jornada VALUES (11,11,1);
+
+INSERT INTO equipos.Partido VALUES (1,'07-07-2019',2,3,1,2,3);
+INSERT INTO equipos.Partido VALUES (2,'09-07-2019',4,1,1,4,5);
+INSERT INTO equipos.Partido VALUES (3,'08-08-2019',0,0,2,2,4);
+INSERT INTO equipos.Partido VALUES (4,'10-08-2019',0,1,2,3,5);
+INSERT INTO equipos.Partido VALUES (5,'06-09-2019',1,2,3,5,2);
+INSERT INTO equipos.Partido VALUES (6,'07-09-2019',5,1,3,4,3);
+INSERT INTO equipos.Partido VALUES (7,'10-10-2019',2,3,4,3,2);
+INSERT INTO equipos.Partido VALUES (8,'12-10-2019',4,1,4,5,4);
+INSERT INTO equipos.Partido VALUES (9,'16-11-2019',0,0,5,4,2);
+INSERT INTO equipos.Partido VALUES (10,'13-11-2019',0,1,5,5,3);
+INSERT INTO equipos.Partido VALUES (11,'19-12-2019',1,2,6,5,2);
+INSERT INTO equipos.Partido VALUES (12,'20-12-2019',5,1,6,4,3);
+INSERT INTO equipos.Partido VALUES (13,'07-01-2020',2,3,7,2,3);
+INSERT INTO equipos.Partido VALUES (14,'09-01-2020',4,1,7,4,5);
+INSERT INTO equipos.Partido VALUES (15,'08-02-2020',0,1,8,2,4);
+INSERT INTO equipos.Partido VALUES (16,'10-02-2020',3,4,8,3,5);
+INSERT INTO equipos.Partido VALUES (17,'06-03-2020',0,2,9,5,2);
+INSERT INTO equipos.Partido VALUES (18,'07-03-2020',3,1,9,4,3);
+INSERT INTO equipos.Partido VALUES (19,'10-04-2020',0,3,10,3,2);
+INSERT INTO equipos.Partido VALUES (20,'12-04-2020',3,3,10,5,4);
+INSERT INTO equipos.Partido VALUES (21,'16-05-2019',0,0,11,4,2);
+INSERT INTO equipos.Partido VALUES (22,'13-06-2019',0,1,11,5,3);
+
+COMMIT;
+
+```
+
+##### **BASE DE DATOS JORNADA**
+
+```sql
+
+CREATE TABLE Liga(
+    liga integer PRIMARY KEY,
+    nombre CHAR(250 CHAR) NOT NULL,
+    fecha_inicio Date NOT NULL,
+    fecha_fin Date NOT NULL
+)TABLESPACE JORNADASTBS;
+
+
+CREATE TABLE Jornada(
+    jornada integer PRIMARY KEY,
+    numero integer NOT NULL,
+    Liga_liga integer NOT NULL
+)TABLESPACE JORNADASTBS;
+
+CREATE TABLE Equipo(
+    equipo integer PRIMARY KEY,
+    nombre char(300 char) NOT NULL
+)TABLESPACE EQUIPOSTBS;
+
+CREATE TABLE Jugador(
+    jugador integer PRIMARY KEY,
+    nombre char(300 char) NOT NULL,
+    goles integer NOT NULL,
+    Equipo_equipo integer
+)TABLESPACE JORNADASTBS;
+
+
+CREATE TABLE Partido(
+    partido integer PRIMARY KEY,
+    fecha date NOT NULL,
+    goles_local integer NOT NULL,
+    goles_visita integer NOT NULL,
+    Jornada_jornada integer NOT NULL,
+    Equipo_equipo integer NOT NULL,
+    Equipo_equipo1 integer NOT NULL
+)TABLESPACE JORNADASTBS;
+
+COMMIT;
+
+--DML
+INSERT INTO jornadas.Liga VALUES (1,'Liga BBVA','01-07-2019','31-05-2019');
+
+INSERT INTO jornadas.Equipo VALUES (1,'Villarreal');
+INSERT INTO jornadas.Equipo VALUES (2,'Valencia');
+INSERT INTO jornadas.Equipo VALUES (3,'RealMadrid');
+INSERT INTO jornadas.Equipo VALUES (4,'Atlético de Madrid');
+INSERT INTO jornadas.Equipo VALUES (5,'Barcelona');
+
+INSERT INTO jornadas.Jugador VALUES (1,'Karim Benzema',14,3);
+INSERT INTO jornadas.Jugador VALUES (2,'Sergio Ramos',5,3);
+INSERT INTO jornadas.Jugador VALUES (3,'Toni Kroos',3,3);
+INSERT INTO jornadas.Jugador VALUES (4,'Luka Modric',3,3);
+INSERT INTO jornadas.Jugador VALUES (5,'Casemiro',3,3,1);
+INSERT INTO jornadas.Jugador VALUES (6,'Vinícius Júnior',2,3);
+INSERT INTO jornadas.Jugador VALUES (7,'Gareth Bale',2,3);
+INSERT INTO jornadas.Jugador VALUES (8,'Federico Valverde',2,3);
+INSERT INTO jornadas.Jugador VALUES (9,'Marcelo',0,3);
+INSERT INTO jornadas.Jugador VALUES (10,'Luka Jovic',2,3);
+INSERT INTO jornadas.Jugador VALUES (11,'Lucas Vázquez',2,3);
+INSERT INTO jornadas.Jugador VALUES (12,'Eden Hazard',1,3);
+INSERT INTO jornadas.Jugador VALUES (13,'Thibaut Courtois',0,3);
+INSERT INTO jornadas.Jugador VALUES (14,'Lionel Messi',19,5);
+INSERT INTO jornadas.Jugador VALUES (15,'Luis Suárez',11,5);
+INSERT INTO jornadas.Jugador VALUES (16,'Antoine Griezmann',8,5);
+INSERT INTO jornadas.Jugador VALUES (17,'Arturo Vidal',6,5);
+INSERT INTO jornadas.Jugador VALUES (18,'Sergio Busquets',2,5);
+INSERT INTO jornadas.Jugador VALUES (19,'Gerard Piqué',1,5);
+INSERT INTO jornadas.Jugador VALUES (20,'Ousmane Dembélé',1,5);
+INSERT INTO jornadas.Jugador VALUES (21,'Sergi Roberto',1,5);
+INSERT INTO jornadas.Jugador VALUES (22,'Ivan Rakitic',0,5);
+INSERT INTO jornadas.Jugador VALUES (23,'Samuel Umtiti',0,5);
+INSERT INTO jornadas.Jugador VALUES (24,'Marc-André ter Stegen',0,5);
+INSERT INTO jornadas.Jugador VALUES (25,'Rafinha',2,5);
+INSERT INTO jornadas.Jugador VALUES (26,'Álvaro Morata',8,4);
+INSERT INTO jornadas.Jugador VALUES (27,'Ángel Correa',5,4);
+INSERT INTO jornadas.Jugador VALUES (28,'João Félix',4,4);
+INSERT INTO jornadas.Jugador VALUES (29,'Saúl Ñíguez',3,4);
+INSERT INTO jornadas.Jugador VALUES (30,'Vitolo',2,4);
+INSERT INTO jornadas.Jugador VALUES (31,'Koke',2,4);
+INSERT INTO jornadas.Jugador VALUES (32,'Diego Costa',2,4);
+INSERT INTO jornadas.Jugador VALUES (33,'Tomas Partney',2,4);
+INSERT INTO jornadas.Jugador VALUES (34,'Felipe',1,4);
+INSERT INTO jornadas.Jugador VALUES (35,'Marcos Llorente',1,4);
+INSERT INTO jornadas.Jugador VALUES (36,'Jan Oblak',0,4);
+INSERT INTO jornadas.Jugador VALUES (37,'Antonio Adán',0,4);
+INSERT INTO jornadas.Jugador VALUES (38,'Maxi Gómez',9,3);
+INSERT INTO jornadas.Jugador VALUES (39,'Daniel Parejo',8,3);
+INSERT INTO jornadas.Jugador VALUES (40,'Kevin Gameiro',5,3);
+INSERT INTO jornadas.Jugador VALUES (41,'Ferrán Torres',4,3);
+INSERT INTO jornadas.Jugador VALUES (42,'Rodrigo Moreno',2,3);
+INSERT INTO jornadas.Jugador VALUES (43,'Carlos Soler',2,3);
+INSERT INTO jornadas.Jugador VALUES (44,'Denis Cheryshev',1,3);
+INSERT INTO jornadas.Jugador VALUES (45,'Daniel Wass',1,3);
+INSERT INTO jornadas.Jugador VALUES (46,'Gonçalo Guedes',0,3);
+INSERT INTO jornadas.Jugador VALUES (47,'Ezequiel Garay',0,3);
+INSERT INTO jornadas.Jugador VALUES (48,'Jaume Costa',0,3);
+INSERT INTO jornadas.Jugador VALUES (49,'Francis Coquelin',0,3);
+
+INSERT INTO jornadas.Jornada VALUES (1,1,1);
+INSERT INTO jornadas.Jornada VALUES (2,2,1);
+INSERT INTO jornadas.Jornada VALUES (3,3,1);
+INSERT INTO jornadas.Jornada VALUES (4,4,1);
+INSERT INTO jornadas.Jornada VALUES (5,5,1);
+INSERT INTO jornadas.Jornada VALUES (6,6,1);
+INSERT INTO jornadas.Jornada VALUES (7,7,1);
+INSERT INTO jornadas.Jornada VALUES (8,8,1);
+INSERT INTO jornadas.Jornada VALUES (9,9,1);
+INSERT INTO jornadas.Jornada VALUES (10,10,1);
+INSERT INTO jornadas.Jornada VALUES (11,11,1);
+
+INSERT INTO jornadas.Partido VALUES (1,'07-07-2019',2,3,1,2,3);
+INSERT INTO jornadas.Partido VALUES (2,'09-07-2019',4,1,1,4,5);
+INSERT INTO jornadas.Partido VALUES (3,'08-08-2019',0,0,2,2,4);
+INSERT INTO jornadas.Partido VALUES (4,'10-08-2019',0,1,2,3,5);
+INSERT INTO jornadas.Partido VALUES (5,'06-09-2019',1,2,3,5,2);
+INSERT INTO jornadas.Partido VALUES (6,'07-09-2019',5,1,3,4,3);
+INSERT INTO jornadas.Partido VALUES (7,'10-10-2019',2,3,4,3,2);
+INSERT INTO jornadas.Partido VALUES (8,'12-10-2019',4,1,4,5,4);
+INSERT INTO jornadas.Partido VALUES (9,'16-11-2019',0,0,5,4,2);
+INSERT INTO jornadas.Partido VALUES (10,'13-11-2019',0,1,5,5,3);
+INSERT INTO jornadas.Partido VALUES (11,'19-12-2019',1,2,6,5,2);
+INSERT INTO jornadas.Partido VALUES (12,'20-12-2019',5,1,6,4,3);
+INSERT INTO jornadas.Partido VALUES (13,'07-01-2020',2,3,7,2,3);
+INSERT INTO jornadas.Partido VALUES (14,'09-01-2020',4,1,7,4,5);
+INSERT INTO jornadas.Partido VALUES (15,'08-02-2020',0,1,8,2,4);
+INSERT INTO jornadas.Partido VALUES (16,'10-02-2020',3,4,8,3,5);
+INSERT INTO jornadas.Partido VALUES (17,'06-03-2020',0,2,9,5,2);
+INSERT INTO jornadas.Partido VALUES (18,'07-03-2020',3,1,9,4,3);
+INSERT INTO jornadas.Partido VALUES (19,'10-04-2020',0,3,10,3,2);
+INSERT INTO jornadas.Partido VALUES (20,'12-04-2020',3,3,10,5,4);
+INSERT INTO jornadas.Partido VALUES (21,'16-05-2019',0,0,11,4,2);
+INSERT INTO jornadas.Partido VALUES (22,'13-06-2019',0,1,11,5,3);
+
+COMMIT;
+
+```
+
+#### **CREACION DE DIRECTORIOS**
+
+```sql
+
+CREATE DIRECTORY dir_equipos_dmp as 'C:/tmp/equipos/export/';
+CREATE DIRECTORY dir_jornadas_dmp as 'C:/tmp/jornadas/export/';
+
+```
+#### **SCRIPT EXPORTACION**
+
+
+- **USERID**: será el usuario que realizará la exportación.
+
+- **DIRECTORY**: será el objeto DIRECTORY que hemos creado previamente en oracle y que apunta al directorio de exportación.
+
+- **DUMPFILE**: definirá el nombre del fichero de exportación.
+
+- **LOGFILE**: definirá el fichero de trazas con el detalle de la exportación.
+
+- **SCHEMAS**: El esquema que sera utilizado para trasladar la información.
+
+##### **EQUIPOS**
+
+```
+
+USERID=equipos
+DIRECTORY=dir_equipos_dmp
+DUMPFILE=export_equipos.dmp
+LOGFILE=log_equipos_export.log
+SCHEMAS=EQUIPOS
+
+```
+
+##### **JORNADAS**
+
+```
+
+USERID=jornadas
+DIRECTORY=dir_jornadas_dmp
+DUMPFILE=export_jornadas.dmp
+LOGFILE=log_jornadas_export.log
+SCHEMAS=JORNADAS
+
+```
+
+#### **COMANDOS DE EXPORTACION**
+
+Primero debes de posicionarte en la ubicacion del fichero que usaremos para la exportación.
+
+##### **EQUIPOS**
+
+- **FICHERO**: C:/tmp/equipos/export/
+
+```sql
+
+expdp -parfile export.par
+
+```
+
+##### **JORNADAS**
+
+- **FICHERO**: C:/tmp/jornadas/export/
+
+```sql
+
+expdp -parfile export.par
+
+```
+
+## **IMPORTACION**
+
+### **PREPARACIÓN DE ENTORNO**
+
+#### **CREACION DE USUARIOS**
+
+```sql
+
+CREATE USER equipos_imp IDENTIFIED BY equipos_imp;
+GRANT ALL PRIVILEGES TO equipos_imp;
+
+CREATE USER jornadas_imp IDENTIFIED BY jornadas_imp;
+GRANT ALL PRIVILEGES TO jornadas_imp;
+
+```
+
+#### **CREACION DE DIRECTORIOS**
+
+```sql
+
+CREATE DIRECTORY dir_equiposimp_dmp as 'c:/tmp/equipos/import/';
+CREATE DIRECTORY dir_jornadasimp_dmp as 'c:/tmp/jornadas/import/';
+
+```
+
+### **SCRIPTS DE IMPORTACIÓN**
+
+- **USERID**: será el usuario que realizará la exportación.
+
+- **DIRECTORY**: será el objeto DIRECTORY que hemos creado previamente en oracle y que apunta al directorio de exportación.
+
+- **DUMPFILE**: definirá el nombre del fichero de exportación.
+
+- **LOGFILE**: definirá el fichero de trazas con el detalle de la exportación.
+
+- **SCHEMAS**: El esquema que sera utilizado para trasladar la información.
+
+- **TABLE_EXISTS_ACTION**: indica que la accion al ubicar tablas ya existentes.
+
+- **REMAP_SCHEMA**: permite establecer un esquema distinto para la importación.
+
+- **CONTENT**: permite especificar si queremos importar únicamente los metadatos, los datos o ambos
+
+#### **EQUIPOS**
+
+```
+
+USERID=equipos_imp
+DIRECTORY=dir_equiposimp_dmp
+DUMPFILE=export_equipos.dmp
+LOGFILE=log_equipos_import.log
+SCHEMAS=EQUIPOS
+TABLE_EXISTS_ACTION=REPLACE
+REMAP_SCHEMA=equipos:equipos_imp
+CONTENT=METADATA_ONLY
+
+```
+
+#### **JORNADAS**
+
+```
+
+USERID=jornadas_imp
+DIRECTORY=dir_jornadasimp_dmp
+DUMPFILE=export_jornadas.dmp
+LOGFILE=log_jornadas_import.log
+SCHEMAS=JORNADAS
+CONTENT=ALL
+TABLE_EXISTS_ACTION=REPLACE
+REMAP_SCHEMA=jornadas:jornadas_imp
+
+```
+
+
+### **COMANDOS DE IMPORTACION**
+
+#### **EQUIPOS**
+
+Primero debes de posicionarte en la ubicacion del fichero que usaremos para la importacion.
+
+##### **EQUIPOS**
+
+- **FICHERO**: C:/tmp/equipos/import/
+
+```sql
+
+impdp -parfile import.par
+
+```
+
+##### **JORNADAS**
+
+- **FICHERO**: C:/tmp/jornadas/import/
+
+```sql
+
+impdp -parfile import.par
+
+```
